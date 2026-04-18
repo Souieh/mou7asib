@@ -1,0 +1,42 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js build output
+/.next/
+/out/
+
+# production
+/build
+
+# prisma
+/prisma/migrations
+# Recommended for Prisma v7: do not commit the generated client folder
+/node_modules/.prisma
+# If you use a custom output directory for the client:
+# /app/generated/prisma
+
+# local environment files (Critical for security)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# SQLite local database files
+*.db
+*.db-journal
+
+# vercel
+.vercel
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
+tsconfig.tsbuildinfo
+

@@ -1,0 +1,398 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+ 
+
+// ------------------------------
+// 1. FISCAL PERIODS
+// ------------------------------
+
+model FiscalPeriod {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique // e.g., "FY2024" or "2024-01"
+  startDate       DateTime
+  endDate         DateTime
+  status          PeriodStatus @default(OPEN)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  journalEntries  JournalEntry[]
+  ledgerEntries   LedgerEntry[]
+}
+
+enum PeriodStatus {
+  OPEN
+  CLOSED
+  LOCKED
+}
+
+// ------------------------------
+// 2. CHART OF ACCOUNTS
+// ------------------------------
+
+model Account {
+  id                  Int       @id @default(autoincrement())
+  parentId            Int?      // hierarchical COA
+  parent              Account?  @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children            Account[] @relation("AccountHierarchy")
+
+  code                String    @unique
+  name                String
+  nameAr              String?
+  type                AccountType
+  normalBalance       NormalBalance @default(DEBIT)
+  isSensitive         Boolean   @default(false)
+  requiresCommitment  Boolean   @default(false) // for hybrid subsidized expenses
+  isActive            Boolean   @default(true)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  journalLines        JournalLine[]
+  ledgerEntries       LedgerEntry[]
+  budgetCommitments   BudgetCommitment[]
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum NormalBalance {
+  DEBIT
+  CREDIT
+}
+
+// ------------------------------
+// 3. CONTACTS (SUB‑LEDGER)
+// ------------------------------
+
+model Contact {
+  id            Int         @id @default(autoincrement())
+  contactType   ContactType
+  name          String
+  nameAr        String?
+  email         String?
+  phone         String?
+  address       String?
+  taxId         String?     // NIF / RC
+  balance       Decimal     @default(0)
+  isActive      Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  invoices      Invoice[]
+  payments      Payment[]
+  journalLines  JournalLine[] // direct link for subledger detail
+  budgetCommitments BudgetCommitment[] // if commitment is with a supplier
+
+  @@unique([contactType, name])
+}
+
+enum ContactType {
+  CUSTOMER
+  SUPPLIER
+  EMPLOYEE
+  OTHER
+}
+
+model Invoice {
+  id              Int       @id @default(autoincrement())
+  contactId       Int
+  contact         Contact   @relation(fields: [contactId], references: [id])
+
+  invoiceNumber   String    @unique
+  invoiceDate     DateTime
+  dueDate         DateTime
+  totalAmount     Decimal
+  paidAmount      Decimal   @default(0)
+  status          InvoiceStatus @default(DRAFT)
+
+  journalEntryId  Int?      // link to the journal entry that posted this invoice
+  journalEntry    JournalEntry? @relation(fields: [journalEntryId], references: [id])
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  payments        Payment[]
+}
+
+enum InvoiceStatus {
+  DRAFT
+  POSTED
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+model Payment {
+  id              Int       @id @default(autoincrement())
+  contactId       Int
+  contact         Contact   @relation(fields: [contactId], references: [id])
+  invoiceId       Int?
+  invoice         Invoice?  @relation(fields: [invoiceId], references: [id])
+
+  paymentDate     DateTime
+  amount          Decimal
+  reference       String?   // check number, wire ref
+
+  journalEntryId  Int?      // link to journal entry
+  journalEntry    JournalEntry? @relation(fields: [journalEntryId], references: [id])
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ------------------------------
+// 4. BUDGET COMMITMENTS (FOR BUDGETARY/HYBRID)
+// ------------------------------
+
+model BudgetCommitment {
+  id                Int       @id @default(autoincrement())
+  commitmentNumber  String    @unique
+  accountId         Int
+  account           Account   @relation(fields: [accountId], references: [id])
+  description       String?
+  supplierId        Int?
+  supplier          Contact?  @relation(fields: [supplierId], references: [id])
+
+  amount            Decimal
+  remaining         Decimal   // updated as consumed
+  date              DateTime
+  status            CommitmentStatus @default(ACTIVE)
+
+  journalLines      JournalLine[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+enum CommitmentStatus {
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+// ------------------------------
+// 5. JOURNAL ENTRIES (CORE ENGINE)
+// ------------------------------
+
+model JournalEntry {
+  id              Int       @id @default(autoincrement())
+  periodId        Int
+  period          FiscalPeriod @relation(fields: [periodId], references: [id])
+
+  entryNumber     String?   @unique
+  entryDate       DateTime  @default(now())
+  description     String
+  reference       String?   // source document number
+  sourceDocType   SourceDocumentType?
+  sourceDocId     String?
+
+  status          EntryStatus @default(DRAFT)
+  postedAt        DateTime?
+
+  createdById     Int
+  createdBy       User      @relation("CreatedEntries", fields: [createdById], references: [id])
+  approvedById    Int?
+  approvedBy      User?     @relation("ApprovedEntries", fields: [approvedById], references: [id])
+
+  lines           JournalLine[]
+  ledgerEntries   LedgerEntry[]
+  invoices        Invoice[]
+  payments        Payment[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([periodId])
+  @@index([entryDate])
+}
+
+enum SourceDocumentType {
+  INVOICE
+  BILL
+  RECEIPT
+  BANK_STATEMENT
+  CONTRACT
+  JOURNAL_VOUCHER
+  ADJUSTMENT
+}
+
+enum EntryStatus {
+  DRAFT
+  PENDING_APPROVAL
+  POSTED
+  VOID
+}
+
+model JournalLine {
+  id              Int       @id @default(autoincrement())
+  entryId         Int
+  entry           JournalEntry @relation(fields: [entryId], references: [id])
+
+  accountId       Int
+  account         Account   @relation(fields: [accountId], references: [id])
+
+  debitAmount     Decimal   @default(0)
+  creditAmount    Decimal   @default(0)
+
+  contactId       Int?      // subledger detail
+  contact         Contact?  @relation(fields: [contactId], references: [id])
+
+  commitmentId    Int?      // budget tracking
+  commitment      BudgetCommitment? @relation(fields: [commitmentId], references: [id])
+
+  description     String?
+
+  ledgerEntry     LedgerEntry?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([entryId])
+  @@index([accountId])
+}
+
+// ------------------------------
+// 6. LEDGER (MATERIALIZED BALANCE)
+// ------------------------------
+
+model LedgerEntry {
+  id              Int       @id @default(autoincrement())
+  accountId       Int
+  account         Account   @relation(fields: [accountId], references: [id])
+  periodId        Int
+  period          FiscalPeriod @relation(fields: [periodId], references: [id])
+
+  journalLineId   Int       @unique
+  journalLine     JournalLine @relation(fields: [journalLineId], references: [id])
+
+  journalEntryId  Int
+  journalEntry    JournalEntry @relation(fields: [journalEntryId], references: [id])
+
+  entryDate       DateTime
+  debit           Decimal   @default(0)
+  credit          Decimal   @default(0)
+  runningBalance  Decimal   // cumulative balance for the account after this entry
+
+  createdAt       DateTime  @default(now())
+
+  @@index([accountId, entryDate])
+  @@index([periodId, accountId])
+}
+
+// ------------------------------
+// 7. USERS, GROUPS, PERMISSIONS (RBAC + LDAP)
+// ------------------------------
+
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  email           String?   @unique
+  ldapDn          String?   @unique // LDAP Distinguished Name
+  isActive        Boolean   @default(true)
+  lastLogin       DateTime?
+  passwordHash    String?   // fallback if no LDAP
+
+  groups          UserGroup[]
+  createdEntries  JournalEntry[]     @relation("CreatedEntries")
+  approvedEntries JournalEntry[]     @relation("ApprovedEntries")
+  auditLogs       AuditLog[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Group {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+
+  users       UserGroup[]
+  permissions GroupPermission[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model UserGroup {
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  groupId   Int
+  group     Group     @relation(fields: [groupId], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@id([userId, groupId])
+}
+
+model Permission {
+  id          Int       @id @default(autoincrement())
+  resource    String    // e.g., "Journal"
+  action      String    // e.g., "Post"
+  description String?
+
+  groups      GroupPermission[]
+
+  @@unique([resource, action])
+}
+
+model GroupPermission {
+  groupId      Int
+  group        Group      @relation(fields: [groupId], references: [id])
+  permissionId Int
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  assignedAt   DateTime   @default(now())
+
+  @@id([groupId, permissionId])
+}
+
+// ------------------------------
+// 8. AUDIT LOG
+// ------------------------------
+
+model AuditLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+
+  action      String    // "POST_JOURNAL", "CLOSE_PERIOD", etc.
+  entityType  String    // "JournalEntry", "Account", etc.
+  entityId    Int
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ------------------------------
+// 9. TAX CONFIGURATION (VAT)
+// ------------------------------
+
+model TaxCode {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  name        String
+  rate        Decimal
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
