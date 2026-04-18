@@ -51,8 +51,8 @@ export function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFormProps)
     }
   }
 
-  const totalDebits = lines.reduce((sum, line) => sum + parseFloat(line.debitAmount || 0), 0)
-  const totalCredits = lines.reduce((sum, line) => sum + parseFloat(line.creditAmount || 0), 0)
+  const totalDebits = lines.reduce((sum, line) => sum + parseFloat(line.debitAmount as string || "0"), 0)
+  const totalCredits = lines.reduce((sum, line) => sum + parseFloat(line.creditAmount as string || "0"), 0)
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,8 +71,8 @@ export function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFormProps)
           ...formData,
           lines: lines.map((line) => ({
             accountId: parseInt(line.accountId),
-            debitAmount: parseFloat(line.debitAmount || 0),
-            creditAmount: parseFloat(line.creditAmount || 0),
+            debitAmount: parseFloat((line.debitAmount as string) || "0"),
+            creditAmount: parseFloat((line.creditAmount as string) || "0"),
             description: line.description,
             contactId: line.contactId ? parseInt(line.contactId) : null,
             commitmentId: line.commitmentId ? parseInt(line.commitmentId) : null,

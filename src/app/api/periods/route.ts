@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import getPrismaClient from "@/lib/prisma"
 
 export async function GET() {
   try {
+    const prisma = getPrismaClient()
     const periods = await prisma.fiscalPeriod.findMany({
       orderBy: { startDate: "desc" },
     })
@@ -14,6 +15,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const prisma = getPrismaClient()
     const body = await req.json()
     const period = await prisma.fiscalPeriod.create({
       data: {

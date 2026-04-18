@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import getPrismaClient from "@/lib/prisma"
 
 export async function GET() {
   try {
+    const prisma = getPrismaClient()
     const entries = await prisma.journalEntry.findMany({
       include: {
         lines: { include: { account: true, contact: true } },
@@ -19,6 +20,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const prisma = getPrismaClient()
     const body = await req.json()
 
     const entry = await prisma.journalEntry.create({

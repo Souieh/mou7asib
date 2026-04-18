@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import getPrismaClient from "@/lib/prisma"
 
 export async function GET() {
   try {
+    const prisma = getPrismaClient()
     const commitments = await prisma.budgetCommitment.findMany({
       include: { account: true, supplier: true, journalLines: true },
       orderBy: { date: "desc" },
@@ -15,6 +16,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const prisma = getPrismaClient()
     const body = await req.json()
     const commitment = await prisma.budgetCommitment.create({
       data: {
