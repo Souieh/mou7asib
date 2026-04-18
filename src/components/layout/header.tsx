@@ -2,6 +2,7 @@
 
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitcher } from "@/components/layout/language-switcher"
 
 interface HeaderBarProps {
   onToggleSidebar: () => void
@@ -22,6 +23,7 @@ export function HeaderBar({ onToggleSidebar }: HeaderBarProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <div className="h-8 w-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold">
             JD
           </div>

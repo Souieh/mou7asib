@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import {
   BarChart3,
   BookOpen,
@@ -18,22 +19,25 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/accounts", label: "Chart of Accounts", icon: Grid2X2 },
-  { href: "/journal", label: "Journal Entries", icon: BookOpen },
-  { href: "/ledger", label: "General Ledger", icon: FileText },
-  { href: "/contacts", label: "Contacts", icon: Users },
-  { href: "/invoices", label: "Invoices", icon: FileText },
-  { href: "/commitments", label: "Budget Commitments", icon: Wallet },
-  { href: "/periods", label: "Fiscal Periods", icon: Package },
-  { href: "/reports", label: "Reports", icon: TrendingUp },
-  { href: "/audit-log", label: "Audit Log", icon: Lock },
-  { href: "/settings", label: "Settings", icon: Settings },
+const navItemKeys = [
+  { href: "dashboard", key: "nav.dashboard", icon: BarChart3 },
+  { href: "accounts", key: "nav.accounts", icon: Grid2X2 },
+  { href: "journal", key: "nav.journal", icon: BookOpen },
+  { href: "ledger", key: "nav.ledger", icon: FileText },
+  { href: "contacts", key: "nav.contacts", icon: Users },
+  { href: "invoices", key: "nav.invoices", icon: FileText },
+  { href: "commitments", key: "nav.commitments", icon: Wallet },
+  { href: "periods", key: "nav.periods", icon: Package },
+  { href: "reports", key: "nav.reports", icon: TrendingUp },
+  { href: "audit-log", key: "nav.auditLog", icon: Lock },
+  { href: "settings", key: "nav.settings", icon: Settings },
 ]
 
 export function SidebarNav() {
   const pathname = usePathname()
+  const params = useParams()
+  const locale = params.locale as string
+  const t = useTranslations()
 
   return (
     <div className="flex flex-col h-full bg-card">
@@ -45,11 +49,12 @@ export function SidebarNav() {
 
       {/* Navigation items */}
       <nav className="flex-1 overflow-auto space-y-1 p-4">
-        {navItems.map((item) => {
+        {navItemKeys.map((item) => {
           const Icon = item.icon
-          const isActive = pathname.startsWith(item.href)
+          const isActive = pathname.includes(`/${item.href}`)
+          const href = `/${locale}/${item.href}`
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={href}>
               <Button
                 variant={isActive ? "default" : "ghost"}
                 className={cn(
@@ -58,7 +63,7 @@ export function SidebarNav() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <span>{t(item.key)}</span>
               </Button>
             </Link>
           )
@@ -69,7 +74,7 @@ export function SidebarNav() {
       <div className="p-4 border-t border-border">
         <Button variant="outline" className="w-full justify-start gap-3">
           <LogOut className="h-4 w-4" />
-          <span>Logout</span>
+          <span>{t("common.logout")}</span>
         </Button>
       </div>
     </div>
