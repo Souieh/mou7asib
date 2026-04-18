@@ -1,129 +1,138 @@
-import prisma from '../src/lib/prisma';
+import { PrismaClient } from "@prisma/client"
+
+const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Start seeding...');
+  console.log("Starting database seed...")
 
-  // Clear existing data (optional, but good for fresh seeds)
-  // Note: Order matters due to foreign key constraints
   try {
-    await prisma.auditLog.deleteMany();
-    await prisma.ledgerEntry.deleteMany();
-    await prisma.journalLine.deleteMany();
-    await prisma.journalEntry.deleteMany();
-    await prisma.payment.deleteMany();
-    await prisma.invoice.deleteMany();
-    await prisma.budgetCommitment.deleteMany();
-    await prisma.contact.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.fiscalPeriod.deleteMany();
-    await prisma.userGroup.deleteMany();
-    await prisma.groupPermission.deleteMany();
-    await prisma.permission.deleteMany();
-    await prisma.group.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.taxCode.deleteMany();
+    // Clean up in order of dependencies
+    await prisma.auditLog.deleteMany()
+    await prisma.ledgerEntry.deleteMany()
+    await prisma.journalLine.deleteMany()
+    await prisma.journalEntry.deleteMany()
+    await prisma.payment.deleteMany()
+    await prisma.invoice.deleteMany()
+    await prisma.budgetCommitment.deleteMany()
+    await prisma.contact.deleteMany()
+    await prisma.account.deleteMany()
+    await prisma.fiscalPeriod.deleteMany()
+    await prisma.userGroup.deleteMany()
+    await prisma.groupPermission.deleteMany()
+    await prisma.permission.deleteMany()
+    await prisma.group.deleteMany()
+    await prisma.user.deleteMany()
+    await prisma.taxCode.deleteMany()
+    console.log("Cleaned up existing data")
   } catch (e) {
-    console.warn('Cleanup failed (possibly tables do not exist yet). Proceeding with creation...');
+    console.warn("Cleanup skipped - first run")
   }
 
-  console.log('Cleaned up existing data.');
-
-  // 1. Create a System User
-  const user1 = await prisma.user.create({
+  // Create admin user
+  const admin = await prisma.user.create({
     data: {
-      username: 'admin',
-      email: 'admin@mou7asib.local',
+      username: "admin",
+      email: "admin@mou7asib.local",
       isActive: true,
     },
-  });
+  })
 
-  // 2. Create a Fiscal Period
-  const currentPeriod = await prisma.fiscalPeriod.create({
+  // Create fiscal period
+  const period = await prisma.fiscalPeriod.create({
     data: {
-      name: 'FY2024',
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      status: 'OPEN',
+      name: "FY 2024",
+      startDate: new Date("2024-01-01"),
+      endDate: new Date("2024-12-31"),
+      status: "OPEN",
     },
-  });
+  })
 
-  // 3. Create Chart of Accounts
-  const cashAccount = await prisma.account.create({
-    data: {
-      code: '1010',
-      name: 'Main Cash',
-      type: 'ASSET',
-      normalBalance: 'DEBIT',
-    },
-  });
+  // Create Chart of Accounts
+  const accounts = await Promise.all([
+    prisma.account.create({
+      data: { code: "1010", name: "Cash", type: "ASSET", normalBalance: "DEBIT" },
+    }),
+    prisma.account.create({
+      data: { code: "1100", name: "Accounts Receivable", type: "ASSET", normalBalance: "DEBIT" },
+    }),
+    prisma.account.create({
+      data: { code: "2000", name: "Accounts Payable", type: "LIABILITY", normalBalance: "CREDIT" },
+    }),
+    prisma.account.create({
+      data: { code: "3000", name: "Common Stock", type: "EQUITY", normalBalance: "CREDIT" },
+    }),
+    prisma.account.create({
+      data: { code: "4010", name: "Sales Revenue", type: "REVENUE", normalBalance: "CREDIT" },
+    }),
+    prisma.account.create({
+      data: { code: "5010", name: "Salaries Expense", type: "EXPENSE", normalBalance: "DEBIT" },
+    }),
+  ])
 
-  const salesAccount = await prisma.account.create({
-    data: {
-      code: '4010',
-      name: 'Product Sales',
-      type: 'REVENUE',
-      normalBalance: 'CREDIT',
-    },
-  });
-
-  // 4. Create a Contact
+  // Create contacts
   const customer = await prisma.contact.create({
     data: {
-      name: 'ACME Corp',
-      contactType: 'CUSTOMER',
-      email: 'finance@acme.corp',
-      balance: 0,
+      name: "ABC Corp",
+      contactType: "CUSTOMER",
+      email: "contact@abc.com",
+      phone: "+1-555-0001",
     },
-  });
+  })
 
-  // 5. Create a Journal Entry with Lines
-  // This represents a simple cash sale
+  const supplier = await prisma.contact.create({
+    data: {
+      name: "XYZ Supplies",
+      contactType: "SUPPLIER",
+      email: "sales@xyz.com",
+      phone: "+1-555-0002",
+    },
+  })
+
+  // Create sample journal entry
   await prisma.journalEntry.create({
     data: {
-      periodId: currentPeriod.id,
-      entryNumber: 'JE-2024-0001',
+      periodId: period.id,
+      entryNumber: "JE-2024-0001",
       entryDate: new Date(),
-      description: 'Initial Cash Sale',
-      status: 'POSTED',
-      createdById: user1.id,
+      description: "Opening Balance",
+      status: "POSTED",
+      createdById: admin.id,
       lines: {
         create: [
           {
-            accountId: cashAccount.id,
-            debitAmount: 150.0,
+            accountId: accounts[0].id,
+            debitAmount: 100000,
             creditAmount: 0,
-            contactId: customer.id,
-            description: 'Cash received from sale',
+            description: "Initial cash",
           },
           {
-            accountId: salesAccount.id,
+            accountId: accounts[3].id,
             debitAmount: 0,
-            creditAmount: 150.0,
-            description: 'Revenue recognized',
+            creditAmount: 100000,
+            description: "Owner contribution",
           },
         ],
       },
     },
-  });
+  })
 
-  // 6. Create a Tax Code
+  // Create tax code
   await prisma.taxCode.create({
     data: {
-      code: 'VAT19',
-      name: 'Value Added Tax 19%',
+      code: "VAT",
+      name: "Value Added Tax",
       rate: 19.0,
     },
-  });
+  })
 
-  console.log('Seeding finished.');
+  console.log("✓ Database seed completed successfully!")
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
+  .catch((e) => {
+    console.error("Seed error:", e)
+    process.exit(1)
   })
-  .catch(async (error) => {
-    console.error(error);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
