@@ -1,14 +1,7 @@
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 import { locales } from "@/i18n";
-
-async function getMessages(locale: string) {
-  try {
-    return (await import(`../../../public/locales/${locale}.json`)).default;
-  } catch {
-    notFound();
-  }
-}
 
 export default async function LocaleLayout({
   children,
@@ -22,10 +15,10 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages(locale);
+  const messages = await getMessages();
 
   return (
-    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
+    <html lang={locale}>
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           {children}
