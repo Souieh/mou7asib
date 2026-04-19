@@ -51,7 +51,9 @@
     "balance": "Balance",
     "logout": "Logout",
     "noData": "No data available",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "selectPeriod": "Select Period",
+    "selectAccount": "Select Account"
   },
   "dashboard": {
     "title": "Financial Dashboard",
@@ -109,7 +111,19 @@
     "totalCredits": "Total Credits",
     "mustBalance": "Debits must equal Credits",
     "lineDetails": "Line Details",
-    "approvalStatus": "Approval Status"
+    "approvalStatus": "Approval Status",
+    "unbalanced": "Entry must be balanced",
+    "save": "Save Entry",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "contact": "Contact",
+    "commitment": "Commitment",
+    "newEntry": "New Journal Entry",
+    "balanced": "Balanced",
+    "difference": "Difference",
+    "noEntries": "No journal entries found",
+    "date": "Date",
+    "reference": "Reference"
   },
   "ledger": {
     "title": "General Ledger",
