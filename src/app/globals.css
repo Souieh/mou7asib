@@ -1,11 +1,8 @@
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "tailwindcss";
+@import "../../node_modules/tw-animate-css/dist/tw-animate.css";
+@import "../../node_modules/shadcn/dist/tailwind.css";
 
-@tailwind base;
-
-@custom-variant dark (&:is(.dark *));
-@tailwind components;
-@tailwind utilities;
+@plugin "tw-animate-css";
 
 :root {
   --card: oklch(1 0 0);
