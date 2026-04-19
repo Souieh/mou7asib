@@ -1,8 +1,5 @@
 @import "tailwindcss";
-@import "../../node_modules/tw-animate-css/dist/tw-animate.css";
-@import "../../node_modules/shadcn/dist/tailwind.css";
-
-@plugin "tw-animate-css";
+@import "tw-animate-css";
 
 :root {
   --card: oklch(1 0 0);
@@ -146,6 +143,19 @@ body {
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --font-size-xs: 12px;
+  --font-size-xs--line-height: 16px;
+  --font-size-sm: 13px;
+  --font-size-sm--line-height: 20px;
+  --font-size-base: 14px;
+  --font-size-base--line-height: 20px;
+  --font-size-lg: 16px;
+  --font-size-lg--line-height: 24px;
+  --font-size-xl: 18px;
+  --font-size-xl--line-height: 28px;
+  --font-size-2xl: 20px;
+  --font-size-2xl--line-height: 28px;
 }
 
 @layer base {
