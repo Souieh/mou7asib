@@ -12,25 +12,10 @@ from qfluentwidgets import (
 )
 
 from ..common import resource
-from ..common.config import EN_SUPPORT_URL, ZH_SUPPORT_URL, cfg
+from ..common.config import cfg
 from ..common.icon import Icon
 from ..common.signal_bus import signalBus
-from ..common.translator import Translator
-from .basic_input_interface import BasicInputInterface
-from .date_time_interface import DateTimeInterface
-from .dialog_interface import DialogInterface
-from .gallery_interface import GalleryInterface
-from .home_interface import HomeInterface
-from .icon_interface import IconInterface
-from .layout_interface import LayoutInterface
-from .material_interface import MaterialInterface
-from .menu_interface import MenuInterface
-from .navigation_view_interface import NavigationViewInterface
-from .scroll_interface import ScrollInterface
-from .setting_interface import SettingInterface
-from .status_info_interface import StatusInfoInterface
-from .text_interface import TextInterface
-from .view_interface import ViewInterface
+from .todo_interface import TODOInterface
 
 # Prevent auto-removal by vscode import oganizer
 _ = resource  #
@@ -45,20 +30,17 @@ class MainWindow(FluentWindow):
         self.themeListener = SystemThemeListener(self)
 
         # create sub interface
-        self.homeInterface = HomeInterface(self)
-        self.iconInterface = IconInterface(self)
-        self.basicInputInterface = BasicInputInterface(self)
-        self.dateTimeInterface = DateTimeInterface(self)
-        self.dialogInterface = DialogInterface(self)
-        self.layoutInterface = LayoutInterface(self)
-        self.menuInterface = MenuInterface(self)
-        self.materialInterface = MaterialInterface(self)
-        self.navigationViewInterface = NavigationViewInterface(self)
-        self.scrollInterface = ScrollInterface(self)
-        self.statusInfoInterface = StatusInfoInterface(self)
-        self.settingInterface = SettingInterface(self)
-        self.textInterface = TextInterface(self)
-        self.viewInterface = ViewInterface(self)
+        self.dashboardInterface = TODOInterface("Dashboard", "dashboardInterface", self)
+        self.chartOfAccountsInterface = TODOInterface("Chart of Accounts", "chartOfAccountsInterface", self)
+        self.journalEntriesInterface = TODOInterface("Journal Entries", "journalEntriesInterface", self)
+        self.generalLedgerInterface = TODOInterface("General Ledger", "generalLedgerInterface", self)
+        self.contactsInterface = TODOInterface("Contacts", "contactsInterface", self)
+        self.invoicesInterface = TODOInterface("Invoices", "invoicesInterface", self)
+        self.budgetCommitmentsInterface = TODOInterface("Budget Commitments", "budgetCommitmentsInterface", self)
+        self.fiscalPeriodsInterface = TODOInterface("Fiscal Periods", "fiscalPeriodsInterface", self)
+        self.reportsInterface = TODOInterface("Reports", "reportsInterface", self)
+        self.auditLogInterface = TODOInterface("Audit Log", "auditLogInterface", self)
+        self.settingsInterface = TODOInterface("Settings", "settingsInterface", self)
 
         # enable acrylic effect
         self.navigationInterface.setAcrylicEnabled(True)
@@ -74,43 +56,24 @@ class MainWindow(FluentWindow):
 
     def connectSignalToSlot(self):
         signalBus.micaEnableChanged.connect(self.setMicaEffectEnabled)
-        signalBus.switchToSampleCard.connect(self.switchToSample)
-        signalBus.supportSignal.connect(self.onSupport)
 
     def initNavigation(self):
         # add navigation items
-        t = Translator()
-        self.addSubInterface(self.homeInterface, FIF.HOME, self.tr("Home"))
-        self.addSubInterface(self.iconInterface, Icon.EMOJI_TAB_SYMBOLS, t.icons)
-        self.navigationInterface.addSeparator()
+        self.addSubInterface(self.dashboardInterface, FIF.HOME, "Dashboard")
+        self.addSubInterface(self.chartOfAccountsInterface, FIF.ALBUM, "Chart of Accounts")
+        self.addSubInterface(self.journalEntriesInterface, FIF.EDIT, "Journal Entries")
+        self.addSubInterface(self.generalLedgerInterface, FIF.BOOK_SHELF, "General Ledger")
+        self.addSubInterface(self.contactsInterface, FIF.PEOPLE, "Contacts")
+        self.addSubInterface(self.invoicesInterface, FIF.PRINT, "Invoices")
+        self.addSubInterface(self.budgetCommitmentsInterface, FIF.CALENDAR, "Budget Commitments")
+        self.addSubInterface(self.fiscalPeriodsInterface, FIF.DATE_TIME, "Fiscal Periods")
+        self.addSubInterface(self.reportsInterface, FIF.DOCUMENT, "Reports")
+        self.addSubInterface(self.auditLogInterface, FIF.HISTORY, "Audit Log")
 
-        pos = NavigationItemPosition.SCROLL
-        self.addSubInterface(self.basicInputInterface, FIF.CHECKBOX, t.basicInput, pos)
-        self.addSubInterface(self.dateTimeInterface, FIF.DATE_TIME, t.dateTime, pos)
-        self.addSubInterface(self.dialogInterface, FIF.MESSAGE, t.dialogs, pos)
-        self.addSubInterface(self.layoutInterface, FIF.LAYOUT, t.layout, pos)
-        self.addSubInterface(self.materialInterface, FIF.PALETTE, t.material, pos)
-        self.addSubInterface(self.menuInterface, Icon.MENU, t.menus, pos)
-        self.addSubInterface(self.navigationViewInterface, FIF.MENU, t.navigation, pos)
-        self.addSubInterface(self.scrollInterface, FIF.SCROLL, t.scroll, pos)
-        self.addSubInterface(self.statusInfoInterface, FIF.CHAT, t.statusInfo, pos)
-        self.addSubInterface(self.textInterface, Icon.TEXT, t.text, pos)
-        self.addSubInterface(self.viewInterface, Icon.GRID, t.view, pos)
-
-        # add custom widget to bottom
-        self.navigationInterface.addItem(
-            routeKey="price",
-            icon=Icon.PRICE,
-            text=t.price,
-            onClick=self.onSupport,
-            selectable=False,
-            tooltip=t.price,
-            position=NavigationItemPosition.BOTTOM,
-        )
         self.addSubInterface(
-            self.settingInterface,
+            self.settingsInterface,
             FIF.SETTING,
-            self.tr("Settings"),
+            "Settings",
             NavigationItemPosition.BOTTOM,
         )
 
@@ -118,7 +81,7 @@ class MainWindow(FluentWindow):
         self.resize(960, 780)
         self.setMinimumWidth(760)
         self.setWindowIcon(QIcon(":/gallery/images/logo.png"))
-        self.setWindowTitle("PyQt-Fluent-Widgets")
+        self.setWindowTitle("Mou7asib Desktop")
 
         self.setMicaEffectEnabled(cfg.get(cfg.micaEnabled))
 
@@ -132,13 +95,6 @@ class MainWindow(FluentWindow):
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
         QApplication.processEvents()
-
-    def onSupport(self):
-        language = cfg.get(cfg.language).value
-        if language.name() == "zh_CN":
-            QDesktopServices.openUrl(QUrl(ZH_SUPPORT_URL))
-        else:
-            QDesktopServices.openUrl(QUrl(EN_SUPPORT_URL))
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
@@ -159,11 +115,3 @@ class MainWindow(FluentWindow):
                 100,
                 lambda: self.windowEffect.setMicaEffect(self.winId(), isDarkTheme()),
             )
-
-    def switchToSample(self, routeKey, index):
-        """switch to sample"""
-        interfaces = self.findChildren(GalleryInterface)
-        for w in interfaces:
-            if w.objectName() == routeKey:
-                self.stackedWidget.setCurrentWidget(w, False)
-                w.scrollToCard(index)
