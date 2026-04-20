@@ -49,7 +49,6 @@ class MainWindow(FluentWindow):
 
         # add items to navigation interface
         self.initNavigation()
-        self.splashScreen.finish()
 
         # start theme listener
         self.themeListener.start()
@@ -85,11 +84,6 @@ class MainWindow(FluentWindow):
 
         self.setMicaEffectEnabled(cfg.get(cfg.micaEnabled))
 
-        # create splash screen
-        self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(106, 106))
-        self.splashScreen.raise_()
-
         desktop = QApplication.desktop().availableGeometry()
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
@@ -98,8 +92,6 @@ class MainWindow(FluentWindow):
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
-        if hasattr(self, "splashScreen"):
-            self.splashScreen.resize(self.size())
 
     def closeEvent(self, e):
         self.themeListener.terminate()
