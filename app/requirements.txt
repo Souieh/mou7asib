@@ -1,1 +1,2 @@
 PyQt-Fluent-Widgets[full]
+requests
