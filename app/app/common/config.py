@@ -54,7 +54,7 @@ class Config(QConfig):
     checkUpdateAtStartUp = ConfigItem("Update", "CheckUpdateAtStartUp", True, BoolValidator())
 
     # API
-    apiUrl = ConfigItem("API", "Url", "http://localhost:3000/api", ConfigSerializer())
+    apiUrl = ConfigItem("API", "Url", "http://localhost:3000/api")
 
 
 YEAR = 2023
