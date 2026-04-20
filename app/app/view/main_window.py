@@ -30,17 +30,17 @@ class MainWindow(FluentWindow):
         self.themeListener = SystemThemeListener(self)
 
         # create sub interface
-        self.dashboardInterface = TODOInterface("Dashboard", "dashboardInterface", self)
-        self.chartOfAccountsInterface = TODOInterface("Chart of Accounts", "chartOfAccountsInterface", self)
-        self.journalEntriesInterface = TODOInterface("Journal Entries", "journalEntriesInterface", self)
-        self.generalLedgerInterface = TODOInterface("General Ledger", "generalLedgerInterface", self)
-        self.contactsInterface = TODOInterface("Contacts", "contactsInterface", self)
-        self.invoicesInterface = TODOInterface("Invoices", "invoicesInterface", self)
-        self.budgetCommitmentsInterface = TODOInterface("Budget Commitments", "budgetCommitmentsInterface", self)
-        self.fiscalPeriodsInterface = TODOInterface("Fiscal Periods", "fiscalPeriodsInterface", self)
-        self.reportsInterface = TODOInterface("Reports", "reportsInterface", self)
-        self.auditLogInterface = TODOInterface("Audit Log", "auditLogInterface", self)
-        self.settingsInterface = TODOInterface("Settings", "settingsInterface", self)
+        self.dashboardInterface = TODOInterface("Dashboard", "dashboardInterface", "dashboard", self)
+        self.chartOfAccountsInterface = TODOInterface("Chart of Accounts", "chartOfAccountsInterface", "accounts", self)
+        self.journalEntriesInterface = TODOInterface("Journal Entries", "journalEntriesInterface", "journal-entries", self)
+        self.generalLedgerInterface = TODOInterface("General Ledger", "generalLedgerInterface", "ledger", self)
+        self.contactsInterface = TODOInterface("Contacts", "contactsInterface", "contacts", self)
+        self.invoicesInterface = TODOInterface("Invoices", "invoicesInterface", "invoices", self)
+        self.budgetCommitmentsInterface = TODOInterface("Budget Commitments", "budgetCommitmentsInterface", "commitments", self)
+        self.fiscalPeriodsInterface = TODOInterface("Fiscal Periods", "fiscalPeriodsInterface", "periods", self)
+        self.reportsInterface = TODOInterface("Reports", "reportsInterface", "reports", self)
+        self.auditLogInterface = TODOInterface("Audit Log", "auditLogInterface", "audit-log", self)
+        self.settingsInterface = TODOInterface("Settings", "settingsInterface", None, self)
 
         # enable acrylic effect
         self.navigationInterface.setAcrylicEnabled(True)
